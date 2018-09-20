@@ -27,6 +27,10 @@ public with sharing class accountController
             meth(datatoSend);
              System.debug('.........datatosend...'+datatoSend);
               System.debug('.........datatosend...'+datatoSend);
+                System.debug('.........datatosend...'+datatoSend);
+              System.debug('.........datatosend...'+datatoSend);  
+              System.debug('.........datatosend...'+datatoSend);
+              System.debug('.........datatosend...'+datatoSend);
        
            // a.Id=null;
         }
