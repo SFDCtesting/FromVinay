@@ -1,0 +1,25 @@
+<aura:component>
+
+ <title>Slick Playground</title>
+    <meta charset="UTF-8"></meta>
+     
+     <ltng:require scripts="{!$Resource.NewCss}" />
+     <ltng:require scripts="{!$Resource.slickcss}" /> 
+     <ltng:require scripts="{!$Resource.min}" />
+     <ltng:require scripts="{!$Resource.slick}" />
+     
+
+ <section class="variable slider">
+        <div width="100%">
+
+            <img src="http://placehold.it/350x100?text=2" ></img></div>
+<div>
+            <img src="http://placehold.it/350x100?text=1" ></img>
+
+        </div>
+    
+      
+    </section>
+ 
+
+</aura:component>

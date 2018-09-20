@@ -1,0 +1,198 @@
+<apex:page standardcontroller="SOTG_2018__RuleEngineAdmin_SOTG__c" extensions="SOTG_2018.RuleEngineSetupController_SOTG" sidebar="true" showHeader="true" id="pg">
+    <script src="/soap/ajax/42.0/connection.js" type="text/javascript"></script>
+    <script src="/soap/ajax/42.0/apex.js"></script>
+    <script>
+    function ObjectChange(thisObj){console.log('----thisObj---'+thisObj.value);}
+    function relatedObjectChange(thisObj){console.log('----thisObj---'+thisObj.value);}
+    
+    // function to change consolidated query border to yellow so as to initimate the change of value.
+    function fieldsChange(thisObj,numVal,condition){
+        // get object of query text area
+        var conObj = document.getElementById('{!$Component.pg.theForm.thePB.conpgsec.conpgsecitem.consolidated}');
+        conObj.style.borderBottomColor  = 'darkorange';
+        conObj.style.borderBottomWidth  = 'unset';
+    }
+    // function to change consolidated query border to yellow so as to initimate the change of value on removal of row.
+    function removeRow(rowno){
+        // get object of query text area
+        var conObj = document.getElementById('{!$Component.pg.theForm.thePB.conpgsec.conpgsecitem.consolidated}');
+        conObj.style.borderBottomColor  = 'darkorange';
+        conObj.style.borderBottomWidth  = 'unset';
+    }
+    </script>
+    <apex:form id="theForm">
+        <apex:pageblock id="thePB" title="Rule Engine Configuration">
+            <apex:pageblockButtons >
+                <!--Save button to Upsert the rule engine value to data base-->
+                <apex:commandButton value="Save Rule" action="{!save}"/>
+                <apex:commandButton value="Cancel Edit" action="{!cancel}" rendered="{!if(ruleEngineTitle == 'Rule Engine Configuration',false,true)}" reRender="theForm">
+                    <apex:param value="ascacas" name="ruleName" assignTo="{!ruleName}"/>
+                </apex:commandButton>
+            </apex:pageblockButtons>
+            <apex:outputPanel id="accountHead">
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockSection columns="1" title="{!ruleEngineTitle}" id="thePbs" collapsible="False">
+                    <apex:pageMessages ></apex:pageMessages>
+                    <apex:pageBlockSection columns="2" title="Rule Description" collapsible="false">
+                        <apex:pageBlockSectionItem id="pgbSec1" >Rule Name:
+                            <apex:outputPanel >
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:inputText size="30" value="{!ruleName}" id="rulename" />
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem id="pgbSec2">Rule Type:
+                            <apex:outputPanel >
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:selectList size="1" value="{!ruletype}">
+                                        <apex:selectOption itemValue="My Day" itemLabel="My Day"/>
+                                        <apex:selectOption itemValue="Alert" itemLabel="Alert"/>
+                                    </apex:selectList>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem id="pgbSec3">Rule  Message:
+                            <apex:outputPanel >
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:inputText size="50" value="{!ruleMessage}" id="rulemsg"/>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem id="pgbSec4">Active:
+                            <apex:outputPanel >
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:inputCheckbox value="{!activeRule}" id="ruleactive"/>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection columns="2" title="Rule Object Configuration" collapsible="false">
+                        <apex:pageBlockSectionItem id="pgbSec3">Select Object:
+                            <apex:outputPanel >
+                                <apex:inputField value="{!SOTG_2018__RuleEngineAdmin_SOTG__c.SOTG_2018__Object__c}" required="true" onchange="ObjectChange(this.value)">
+                                    <apex:actionFunction action="{!ObjectChange}" name="ObjectChange" rerender="theForm">
+                                        <apex:param name="ruleAdmin" value="{!SOTG_2018__RuleEngineAdmin_SOTG__c.SOTG_2018__Object__c}" assignTo="{!ruleAdmin}" />
+                                    </apex:actionFunction>
+                                </apex:inputField>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection columns="1" title="Fields And Value Configuration" collapsible="false" id="pgbSec4" rendered="{!fieldsSection}">
+                        <apex:pageBlockTable value="{!reWrapperList}" var="wrap">
+                            <apex:column headerValue="Action" width="5%">
+                                <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__Object__c}" style="display:none;"/>
+                                <apex:commandLink value="Remove" style="color:red" action="{!removeRowFromAccList}" oncomplete="removeRow('{!rowToRemove}')" rendered="{!rowNum > 0}" rerender="accountHead,logicId" immediate="true" >
+                                    <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                </apex:commandLink>
+                                <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                            </apex:column>
+                            <apex:column headerValue="Fields" width="30%">
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:selectList title="Operator" size="1" value="{!wrap.RuleEngineRecord.SOTG_2018__Fields__c}">
+                                        <apex:selectOptions value="{!fieldsSelectList}" />
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a,pgbSec4"  action="{!displayValue}" oncomplete="fieldsChange('{!SOTG_2018__RuleEngineAdmin_SOTG__c.SOTG_2018__Object__c}.{!wrap.RuleEngineRecord.SOTG_2018__Fields__c}','{!wrap.index}',1)">
+                                            <apex:param name="rowChanged" value="{!rowNum}" assignTo="{!rowChanged}" />
+                                        </apex:actionSupport>
+                                    </apex:selectList>
+                                </div>
+                            </apex:column>
+                            <apex:column headerValue="Operator" width="15%" id="operator">
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:selectList title="Operator" size="1" value="{!wrap.RuleEngineRecord.SOTG_2018__Operator__c}" onchange="fieldsChange(this.value,'{!wrap.index}',2)">
+                                        <apex:selectOptions value="{!wrap.operators}"/>
+                                    </apex:selectList>
+                                </div>
+                            </apex:column>
+                            <apex:column headerValue="Value" id="a" width="40%">
+                             
+                                <div class = "requiredInput">
+                                    <div class = "requiredBlock"></div>
+                                    <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__DateValue__c}"  rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--' && (fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'DATE' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'DATETIME'),true,false)}">
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a" oncomplete="fieldsChange('{!wrap.RuleEngineRecord.SOTG_2018__DateValue__c}'+'{!wrap.RuleEngineRecord.SOTG_2018__Date_N_values__c}','{!wrap.index}',3)"></apex:actionSupport>
+                                    </apex:inputField>
+                                    <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__Date_N_values__c}" onchange="fieldsChange('{!wrap.RuleEngineRecord.SOTG_2018__DateValue__c}'+this.value,'{!wrap.index}',3)"  style="width:10%;margin-left:2%;" rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--' &&(fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'DATE' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'DATETIME') && contains(wrap.RuleEngineRecord.SOTG_2018__DateValue__c, ":"),true,false)}" />
+                                    <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__NumberValue__c}" rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--' && (fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'CURRENCY' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'PERCENT' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'DOUBLE'),true,false)}">
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a" oncomplete="fieldsChange('{!wrap.RuleEngineRecord.SOTG_2018__NumberValue__c}','{!wrap.index}',3)"></apex:actionSupport>
+                                    </apex:inputField>
+                                    <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__TextValue__c}" rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--' && (fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'TEXT' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'STRING' || fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'REFERENCE'),true,false)}">
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a" oncomplete="fieldsChange('{!wrap.RuleEngineRecord.SOTG_2018__TextValue__c}','{!wrap.index}',3)"></apex:actionSupport>
+                                    </apex:inputField>
+
+                                    <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__IsKeyContact__c}"  rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--' && (fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'BOOLEAN'),true,false)}">
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a" oncomplete="fieldsChange('{!wrap.RuleEngineRecord.SOTG_2018__IsKeyContact__c},'{!wrap.index}',3)"></apex:actionSupport>
+                                    </apex:inputField>
+                                 
+                                    <apex:selectList title="Operator" size="1" value="{!wrap.RuleEngineRecord.SOTG_2018__TextValue__c}" rendered="{!IF(wrap.RuleEngineRecord.SOTG_2018__Fields__c != '' && wrap.RuleEngineRecord.SOTG_2018__Fields__c != '--None--'  && (fieldToDateType[wrap.RuleEngineRecord.SOTG_2018__Fields__c] == 'PICKLIST' ),true,false)}">
+                                        <apex:selectOption itemValue="" itemLabel="--None--"/>
+                                         
+                                        <apex:selectOptions value="{!wrap.selectedField}"/>
+                                        <apex:actionSupport event="onchange" reRender="accountHead,logicId,operator,a" oncomplete="fieldsChange('\''+'{!wrap.RuleEngineRecord.SOTG_2018__TextValue__c}'+'\'','{!wrap.index}',3)"></apex:actionSupport>
+                                    </apex:selectList>
+                                       
+                                </div>
+                            </apex:column>
+                            <apex:column headerValue="Logic" id="logicId" width="10%">
+                                <apex:inputField value="{!wrap.RuleEngineRecord.SOTG_2018__Logic__c}" required="{!IF(reWrapperList.size == rowNum,false,true)}" onchange="fieldsChange(this.value,'{!wrap.index}',4)"/>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <apex:outputPanel dir="block" id="button">
+                            <apex:commandButton value="Add Row" rerender="accountHead,theForm" Status="status" action="{!addNewRow}" />
+                            <apex:commandButton value="Generate condition" rerender="accountHead,theForm" Status="status" action="{!GenerateCondition}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                    
+                </apex:pageBlockSection>
+                <apex:pageBlockSection columns="1" title="Consolidated Query formula" collapsible="false" id="conpgsec">
+                    <apex:pageBlockSectionItem id="conpgsecitem">
+                        <apex:inputTextarea cols="150" id="consolidated" value="{!consolidatedQuery}"/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:commandButton value="Check query" rerender="accountHead,theForm" Status="status" action="{!CheckQuery}" />
+            </apex:outputPanel>
+            <apex:pageMessages ></apex:pageMessages>
+        </apex:pageblock>
+    </apex:form>
+    <apex:form id="frm2">
+        <apex:pageBlock id="pb" title="Rule Engine List">
+            <apex:outputPanel >
+                <apex:pageBlockSection id="pbs" title="Rule Details" collapsible="false" columns="1">
+                    <apex:pageBlockTable var="master" value="{!ruleEngineMaster}">
+                        <apex:column headerValue="Action" width="3%">
+                            <apex:commandLink value="Edit" style="color:green" action="{!editRule}" reRender="theForm">
+                                <apex:param value="{!master.Id}" name="masterId" assignTo="{!masterId}"/>
+                                <apex:param value="{!master.SOTG_2018__Rule_name__c}" name="ruleName" assignTo="{!ruleName}"/>
+                                <apex:param value="{!master.SOTG_2018__Message__c}" name="ruleName" assignTo="{!ruleMessage}"/>
+                            </apex:commandLink>
+                        </apex:column>
+                        <apex:column headerValue="Rule type" width="5%">
+                            <apex:outputText value="{!master.SOTG_2018__Rule_Type__c}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Active" width="3%">
+                            <apex:inputCheckbox value="{!master.SOTG_2018__Active__c}" disabled="true"></apex:inputCheckbox>
+                        </apex:column>
+                        <apex:column headerValue="Rule Name" width="20%">
+                            <apex:outputText value="{!master.SOTG_2018__Rule_name__c}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Rule Message" width="30%">
+                            <apex:outputText value="{!master.SOTG_2018__Message__c}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Rule Query" width="25%">
+                            <apex:outputText value="{!master.SOTG_2018__Query_Condition__c}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Rule Field" >
+                            <apex:repeat value="{!master.RuleEngineDetails_SOTG__r}" var="child">
+                                <apex:outputText value="{!child.SOTG_2018__Fields__c},"></apex:outputText>
+                            </apex:repeat>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

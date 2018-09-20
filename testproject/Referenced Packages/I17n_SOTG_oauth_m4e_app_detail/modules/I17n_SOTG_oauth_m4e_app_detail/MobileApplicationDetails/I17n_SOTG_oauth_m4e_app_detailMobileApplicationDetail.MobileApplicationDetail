@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MobileApplicationDetail xmlns="http://soap.sforce.com/2006/04/metadata">
+    <applicationInstallUrl>https://my.testfairy.com/download/70TKCCSG64R2TD1G6WT3GDHQ6MT2TCAX6V6AJJ8ZE8117A50KSC7QBYVE4W32/getapp?_=1534751394</applicationInstallUrl>
+    <devicePlatform>ios</devicePlatform>
+    <deviceType>phone</deviceType>
+    <minimumOsVersion>10.0</minimumOsVersion>
+    <privateApp>false</privateApp>
+    <version>1.0</version>
+</MobileApplicationDetail>
